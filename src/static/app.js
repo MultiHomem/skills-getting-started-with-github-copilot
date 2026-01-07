@@ -10,8 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message and existing options
       activitiesList.innerHTML = "";
+
+      // Reset the select to the default option to avoid duplicates
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
@@ -20,19 +23,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // Build participants section HTML
+        let participantsHtml = "";
+        if (details.participants && details.participants.length > 0) {
+          participantsHtml = `<div class="participants-section">
+              <h5>Participants</h5>
+              <ul>
+                ${details.participants.map((p) => `<li>${p}</li>`).join("")}
+              </ul>
+            </div>`;
+        } else {
+          participantsHtml = `<div class="participants-section">
+              <h5>Participants</h5>
+              <p class="no-participants">No participants yet</p>
+            </div>`;
+        }
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          ${participantsHtml}
         `;
 
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
+        // Add option to select dropdown and disable if full
         const option = document.createElement("option");
         option.value = name;
-        option.textContent = name;
+        option.textContent = spotsLeft <= 0 ? `${name} (Full)` : name;
+        option.disabled = spotsLeft <= 0;
         activitySelect.appendChild(option);
       });
     } catch (error) {
@@ -62,6 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+
+        // Refresh activities so the participants list and availability update immediately
+        await fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
