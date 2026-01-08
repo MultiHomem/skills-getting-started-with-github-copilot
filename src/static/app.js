@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch("/activities");
+      const response = await fetch("/activities", { cache: 'no-store' });
       const activities = await response.json();
 
       // Clear loading message and existing options
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
           participantsHtml = `<div class="participants-section">
               <h5>Participants</h5>
               <ul>
-                ${details.participants.map((p) => `<li>${p}</li>`).join("")}
+                ${details.participants.map((p) => `<li><span class="participant-email">${p}</span><button class="unregister-btn" data-activity="${name}" data-email="${p}" title="Unregister">🗑️</button></li>`).join("")}
               </ul>
             </div>`;
         } else {
@@ -105,6 +105,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Handle unregister button clicks (event delegation)
+  activitiesList.addEventListener("click", async (event) => {
+    const btn = event.target.closest(".unregister-btn");
+    if (!btn) return;
+
+    const activity = btn.dataset.activity;
+    const email = btn.dataset.email;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/participants?email=${encodeURIComponent(email)}`,
+        { method: "DELETE" }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
+        // Refresh activities list to reflect removal
+        await fetchActivities();
+      } else {
+        messageDiv.textContent = result.detail || "An error occurred while unregistering";
+        messageDiv.className = "error";
+      }
+      messageDiv.classList.remove("hidden");
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
+    } catch (error) {
+      messageDiv.textContent = "Failed to unregister. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      console.error("Error unregistering:", error);
+    }
+  });
+
   // Initialize app
   fetchActivities();
+
+  // Poll for updates every 5 seconds so other clients' changes appear without a manual refresh
+  const POLL_INTERVAL_MS = 5000;
+  setInterval(fetchActivities, POLL_INTERVAL_MS);
 });

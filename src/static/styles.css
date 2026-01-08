@@ -91,16 +91,32 @@ section h3 {
 }
 
 .activity-card .participants-section ul {
-  list-style: disc inside;
-  padding-left: 12px;
+  list-style: none;
+  padding-left: 0;
   margin: 0;
 }
 
 .activity-card .participants-section li {
   margin-bottom: 6px;
   color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
+.activity-card .participants-section .unregister-btn {
+  background: transparent;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.activity-card .participants-section .unregister-btn:hover {
+  background-color: rgba(198, 40, 40, 0.08);
+}
 .activity-card .participants-section .no-participants {
   font-style: italic;
   color: #666;
